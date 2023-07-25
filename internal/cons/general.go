@@ -1,6 +1,7 @@
 package cons
 
 const (
+	Settings      = "Settings"
 	Add           = "Add"
 	AddMsg        = "Add successfully"
 	Delete        = "Delete"

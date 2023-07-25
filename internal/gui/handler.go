@@ -26,9 +26,6 @@ func githubHandler() {
 	}
 }
 
-// settingHandler opens app setting
-func settingsHandler() {}
-
 // addHandler opens a new window for creating new bucket/key
 func addHandler() {
 	f, _ := filename.Get()

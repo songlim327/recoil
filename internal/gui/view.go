@@ -57,7 +57,6 @@ func opsBoxTopView() []fyne.CanvasObject {
 func opsBoxBottomView() []fyne.CanvasObject {
 	return []fyne.CanvasObject{
 		opsButton("Github", images.Github, func() { githubHandler() }),
-		opsButton("Settings", images.Settings, func() { settingsHandler() }),
 		opsButton("About", images.About, func() { aboutHandler() }),
 	}
 }
