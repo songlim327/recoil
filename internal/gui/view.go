@@ -19,7 +19,7 @@ func keyBox() *container.Scroll {
 
 // bucBox renders the bucket list container
 func bucBox() *container.Scroll {
-	bucketItemList = itemList(buckets, images.Bucket)
+	bucketItemList := itemList(buckets, images.Bucket)
 	bucketItemList.OnSelected = bucketHandler
 	return container.NewVScroll(bucketItemList)
 }
