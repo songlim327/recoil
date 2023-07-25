@@ -22,7 +22,7 @@ import (
 func githubHandler() {
 	err := browser.OpenURL("https://github.com/songlim327/recoil")
 	if err != nil {
-		errorHandler(err)
+		errorHandler(err, mw)
 	}
 }
 
@@ -46,12 +46,19 @@ func addHandler() {
 		// Bucket selection when entity equals to key (default hidden)
 		lBucket := widget.NewLabel("Bucket")
 		sBucket := widget.NewSelect(bsInstr, func(s string) {})
+		sBucket.SetSelectedIndex(0)
 		sBucket.PlaceHolder = "Select bucket"
 		lBucket.Hide()
 		sBucket.Hide()
 
 		// Name
 		eName := widget.NewEntry()
+		eName.Validator = func(text string) error {
+			if text == "" {
+				return fmt.Errorf("name can't be empty")
+			}
+			return nil
+		}
 
 		// Value (default hidden)
 		lValue := widget.NewLabel("Value")
@@ -73,6 +80,7 @@ func addHandler() {
 				eValue.Hide()
 			}
 		})
+		sEntity.SetSelected(cons.BucketEntity)
 
 		f := widget.NewForm(
 			widget.NewFormItem("", container.New(layout.NewFormLayout(),
@@ -93,6 +101,12 @@ func addHandler() {
 		}
 		f.OnSubmit = func() {
 			var err error
+			// Validate form
+			err = eName.Validate()
+			if err != nil {
+				errorHandler(err, kw)
+				return
+			}
 			if sEntity.Selected == cons.BucketEntity {
 				// Create bucket
 				err = addBucket(eName.Text)
@@ -102,14 +116,18 @@ func addHandler() {
 			}
 
 			if err != nil {
-				errorHandler(err)
+				errorHandler(err, kw)
 			} else {
 				dialog.NewInformation(cons.Add, cons.AddMsg, mw).Show()
 				// Refresh item list after add
 				if sEntity.Selected == cons.BucketEntity {
-					bindAllBuckets()
+					err = bindAllBuckets()
 				} else {
-					bindAllKeys(selBucket)
+					err = bindAllKeys(selBucket)
+				}
+				// Error handler after refresh buckets/keys
+				if err != nil {
+					errorHandler(err, mw)
 				}
 
 				kw.Close()
@@ -136,9 +154,12 @@ func deleteBucketHandler(item string) {
 
 				// Delete bucket error handling
 				if err != nil {
-					errorHandler(err)
+					errorHandler(err, mw)
 				} else {
-					bindAllBuckets()
+					err := bindAllBuckets()
+					if err != nil {
+						errorHandler(err, mw)
+					}
 					dialog.NewInformation(cons.BucketDelete, cons.DeleteMsg, mw).Show()
 				}
 			}
@@ -161,9 +182,12 @@ func deleteKeyHandler(item string) {
 
 				// Delete key error handling
 				if err != nil {
-					errorHandler(err)
+					errorHandler(err, mw)
 				} else {
-					bindAllKeys(selBucket)
+					err := bindAllKeys(selBucket)
+					if err != nil {
+						errorHandler(err, mw)
+					}
 					dialog.NewInformation(cons.KeyDelete, cons.DeleteMsg, mw).Show()
 				}
 			}
@@ -183,6 +207,12 @@ func editBucketHandler() {
 		lBucket := widget.NewLabel(selBucket)
 		eBucket := widget.NewEntry()
 		eBucket.SetPlaceHolder("Enter a new bucket name")
+		eBucket.Validator = func(text string) error {
+			if text == "" {
+				return fmt.Errorf("new name can't be empty")
+			}
+			return nil
+		}
 
 		f := widget.NewForm(
 			widget.NewFormItem("Name", lBucket),
@@ -193,11 +223,19 @@ func editBucketHandler() {
 			bw.Close()
 		}
 		f.OnSubmit = func() {
-			err := updateBucket(selBucket, eBucket.Text)
+			err := f.Validate()
 			if err != nil {
-				errorHandler(err)
+				errorHandler(err, bw)
+			}
+
+			err = updateBucket(selBucket, eBucket.Text)
+			if err != nil {
+				errorHandler(err, bw)
 			} else {
-				bindAllBuckets()
+				err := bindAllBuckets()
+				if err != nil {
+					errorHandler(err, mw)
+				}
 				dialog.NewInformation(cons.BucketEdit, cons.BucketEditMsg, mw).Show()
 				bw.Close()
 			}
@@ -224,7 +262,7 @@ func editKeyHandler() {
 		// Get key value and set to text area
 		v, err := db.GetKey(selBucket, selKey)
 		if err != nil {
-			errorHandler(err)
+			errorHandler(err, mw)
 		}
 		textArea.SetText(string(v))
 
@@ -237,7 +275,7 @@ func editKeyHandler() {
 		f.OnSubmit = func() {
 			err := updateKey(selBucket, selKey, textArea.Text)
 			if err != nil {
-				errorHandler(err)
+				errorHandler(err, kw)
 			} else {
 				dialog.NewInformation(cons.KeyEdit, cons.KeyEditMsg, mw).Show()
 				kw.Close()
@@ -260,9 +298,13 @@ func bucketHandler(id widget.ListItemID) {
 	// Get selected bucket
 	v, err := buckets.GetValue(id)
 	if err != nil {
-		errorHandler(err)
+		errorHandler(err, mw)
 	}
-	bindAllKeys(v)
+	// Refresh bucket keys
+	err = bindAllKeys(v)
+	if err != nil {
+		errorHandler(err, mw)
+	}
 
 	// Clear key item list selected value
 	selKey = ""
@@ -273,7 +315,7 @@ func bucketHandler(id widget.ListItemID) {
 func openDbHandler() {
 	d := dialog.NewFileOpen(func(uc fyne.URIReadCloser, callbackErr error) {
 		if callbackErr != nil {
-			errorHandler(callbackErr)
+			errorHandler(callbackErr, mw)
 			return
 		}
 
@@ -284,25 +326,28 @@ func openDbHandler() {
 			var err error
 			db, err = core.New(f)
 			if err != nil {
-				errorHandler(err)
+				errorHandler(err, mw)
 			}
 
 			// Bind filename string
 			filename.Set(uc.URI().Name())
-			bindAllBuckets()
+			err = bindAllBuckets()
+			if err != nil {
+				errorHandler(err, mw)
+			}
 		}
 	}, mw)
 
 	curDir, err := os.Getwd()
 	if err != nil {
-		errorHandler(err)
+		errorHandler(err, mw)
 	}
 
 	// Current app directory
 	fileUri := storage.NewFileURI(curDir)
 	fileUriLister, err := storage.ListerForURI(fileUri)
 	if err != nil {
-		errorHandler(err)
+		errorHandler(err, mw)
 	}
 
 	// Init a .db file type for URI
@@ -351,8 +396,8 @@ func aboutHandler() {
 }
 
 // errorHandler handle error and show it to the user
-func errorHandler(err error) {
-	ew := dialog.NewError(err, mw)
+func errorHandler(err error, parentWindow fyne.Window) {
+	ew := dialog.NewError(err, parentWindow)
 	ew.Resize(fyne.NewSize(200, 140))
 
 	ew.Show()

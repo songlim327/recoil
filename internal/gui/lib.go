@@ -51,25 +51,26 @@ func updateBucket(bucket, newName string) error {
 }
 
 // bindAllBuckets retrieve all buckets from db and bind to fyne data.Binding
-func bindAllBuckets() {
+func bindAllBuckets() error {
 	// Bind buckets list of byte string
 	bs, err := db.IterateBucket()
 	if err != nil {
-		errorHandler(err)
+		return err
 	}
 	buckets.Set(bytesArrToStringArr(bs))
 
 	// Clear key item list value
 	selKey = ""
 	keys.Set([]string{})
+	return nil
 }
 
 // bindAllKeys retrieve all keys in a bucket from db and bind to fyne data.Binding
-func bindAllKeys(bucket string) {
+func bindAllKeys(bucket string) error {
 	// Get bucket key list and bind
 	ks, err := db.IterateKey(bucket)
 	if err != nil {
-		errorHandler(err)
+		return err
 	}
 	selBucket = bucket
 	keys.Set(bytesArrToStringArr(ks))
@@ -77,6 +78,7 @@ func bindAllKeys(bucket string) {
 	// clear selected key value
 	selKey = ""
 	keyItemList.UnselectAll()
+	return nil
 }
 
 // bytesArrToStringArr converts array of bytes array to string array
