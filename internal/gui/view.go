@@ -1,35 +1,63 @@
 package gui
 
 import (
-	"image/color"
+	"recoil/internal/cons"
 	"recoil/resources/images"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
-// resBox renders the result container
-func resBox() *fyne.Container {
-	text := canvas.NewText("Hello world!", color.White)
-	return container.NewVBox(text)
+// keyBox renders the key list container
+func keyBox() *container.Scroll {
+	keyItemList = itemList(keys, images.Key)
+	keyItemList.OnSelected = keyHandler
+	return container.NewVScroll(keyItemList)
 }
 
-// keyBox renders the key list container
-func keyBox() *fyne.Container {
-	text := canvas.NewText("key", color.White)
-	return container.NewVBox(text)
+// bucBox renders the bucket list container
+func bucBox() *container.Scroll {
+	bucketItemList = itemList(buckets, images.Bucket)
+	bucketItemList.OnSelected = bucketHandler
+	return container.NewVScroll(bucketItemList)
 }
 
 // opsBox renders the operation container
 func opsBox() *fyne.Container {
-	l := []fyne.CanvasObject{
-		opsButton("Open", images.Add, func() { openDbHandler() }),
-		layout.NewSpacer(),
-		// TODO: github handler
-		opsButton("Github", images.Github, func() {}),
+	l := append(opsBoxTopView(), layout.NewSpacer())
+	l = append(l, opsBoxBottomView()[:]...)
+
+	return container.NewVBox(l...)
+}
+
+// dbBox renders the container showing the database name
+func dbBox() *fyne.Container {
+	return container.NewHBox(
+		widget.NewLabelWithData(filename),
+	)
+}
+
+// opsBoxTopView renders the top container of operation container
+func opsBoxTopView() []fyne.CanvasObject {
+	return []fyne.CanvasObject{
+		opsButton("Open", images.Open, func() {
+			openDbHandler()
+		}),
+		opsButton(cons.Add, images.Add, func() { addHandler() }),
+		opsButton(cons.BucketEdit, images.Edit, func() { editBucketHandler() }),
+		opsButton(cons.KeyEdit, images.Edit, func() { editKeyHandler() }),
+		opsButton(cons.BucketDelete, images.Delete, func() { deleteBucketHandler(selBucket) }),
+		opsButton(cons.KeyDelete, images.Delete, func() { deleteKeyHandler(selKey) }),
+	}
+}
+
+// opsBoxBottomView renders the bottom container of operation container
+func opsBoxBottomView() []fyne.CanvasObject {
+	return []fyne.CanvasObject{
+		opsButton("Github", images.Github, func() { githubHandler() }),
+		opsButton("Settings", images.Settings, func() { settingsHandler() }),
 		opsButton("About", images.About, func() { aboutHandler() }),
 	}
-	return container.NewVBox(l...)
 }

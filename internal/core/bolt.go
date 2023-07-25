@@ -10,6 +10,11 @@ type Database struct {
 	db *bolt.DB
 }
 
+type Key struct {
+	Name  string
+	Value string
+}
+
 // New create a connection to the bolt key-value database
 func New(dbPath string) (*Database, error) {
 	db, err := bolt.Open(dbPath, 0666, nil)
@@ -22,7 +27,7 @@ func New(dbPath string) (*Database, error) {
 
 // Interate over bolt buckets
 func (d Database) IterateBucket() ([][]byte, error) {
-	var res [][]byte
+	res := [][]byte{}
 	err := d.db.View(func(tx *bolt.Tx) error {
 		return tx.ForEach(func(name []byte, _ *bolt.Bucket) error {
 			res = append(res, name)
@@ -62,7 +67,31 @@ func (d Database) Delete(bucketName string) error {
 
 // Iterate over keys in a bolt bucket
 func (d Database) IterateKey(bucketName string) ([][]byte, error) {
-	var res [][]byte
+	res := [][]byte{}
+	err := d.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketName))
+		if b == nil {
+			return fmt.Errorf("bucket %s not found", bucketName)
+		}
+
+		cursor := b.Cursor()
+
+		for k, _ := cursor.First(); k != nil; k, _ = cursor.Next() {
+			res = append(res, k)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// Iterate over keys and values in a bolt bucket
+func (d Database) IterateKeyValues(bucketName string) ([]Key, error) {
+	res := []Key{}
 	err := d.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketName))
 		if b == nil {
@@ -72,7 +101,7 @@ func (d Database) IterateKey(bucketName string) ([][]byte, error) {
 		cursor := b.Cursor()
 
 		for k, v := cursor.First(); k != nil; k, v = cursor.Next() {
-			res = append(res, v)
+			res = append(res, Key{string(k), string(v)})
 		}
 
 		return nil
@@ -81,6 +110,7 @@ func (d Database) IterateKey(bucketName string) ([][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
 
@@ -102,7 +132,7 @@ func (d Database) UpdateKey(bucketName string, key string, value []byte) error {
 
 // Get key from bolt bucket
 func (d Database) GetKey(bucketName string, key string) ([]byte, error) {
-	var res []byte
+	res := []byte{}
 	err := d.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketName))
 		if b == nil {

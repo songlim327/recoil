@@ -3,25 +3,315 @@ package gui
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"recoil/internal/cons"
+	"recoil/internal/core"
 	"recoil/resources/images"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
+	"github.com/pkg/browser"
 )
 
-// openDbHandler opens a new bolt database connection to existing/new database
-func openDbHandler() {
-	dialog.NewFileOpen(func(uc fyne.URIReadCloser, err error) {
-		fmt.Println(uc.URI().Name())
+// githubHandler opens repository github link
+func githubHandler() {
+	err := browser.OpenURL("https://github.com/songlim327/recoil")
+	if err != nil {
+		errorHandler(err)
+	}
+}
 
+// settingHandler opens app setting
+func settingsHandler() {}
+
+// addHandler opens a new window for creating new bucket/key
+func addHandler() {
+	f, _ := filename.Get()
+	if f == "" {
+		dialog.NewInformation(cons.Add, cons.ErrNoDb, mw).Show()
+	} else {
+		kw := subWindow(cons.Add)
+
+		bsInBytes, _ := buckets.Get()
+		bsInstr := []string{}
+		for _, v := range bsInBytes {
+			bsInstr = append(bsInstr, string(v))
+		}
+
+		// Bucket selection when entity equals to key (default hidden)
+		lBucket := widget.NewLabel("Bucket")
+		sBucket := widget.NewSelect(bsInstr, func(s string) {})
+		sBucket.PlaceHolder = "Select bucket"
+		lBucket.Hide()
+		sBucket.Hide()
+
+		// Name
+		eName := widget.NewEntry()
+
+		// Value (default hidden)
+		lValue := widget.NewLabel("Value")
+		eValue := widget.NewMultiLineEntry()
+		lValue.Hide()
+		eValue.Hide()
+
+		// Entity
+		sEntity := widget.NewSelect([]string{cons.BucketEntity, cons.KeyEntity}, func(s string) {
+			if s == cons.KeyEntity {
+				lBucket.Show()
+				sBucket.Show()
+				lValue.Show()
+				eValue.Show()
+			} else {
+				lBucket.Hide()
+				sBucket.Hide()
+				lValue.Hide()
+				eValue.Hide()
+			}
+		})
+
+		f := widget.NewForm(
+			widget.NewFormItem("", container.New(layout.NewFormLayout(),
+				widget.NewLabel("Entity"),
+				sEntity,
+				lBucket,
+				sBucket,
+				widget.NewLabel("Name"),
+				eName,
+				lValue,
+				eValue,
+			)),
+		)
+
+		f.SubmitText = "Create"
+		f.OnCancel = func() {
+			kw.Close()
+		}
+		f.OnSubmit = func() {
+			var err error
+			if sEntity.Selected == cons.BucketEntity {
+				// Create bucket
+				err = addBucket(eName.Text)
+			} else {
+				// Create key
+				err = updateKey(sBucket.Selected, eName.Text, eValue.Text)
+			}
+
+			if err != nil {
+				errorHandler(err)
+			} else {
+				dialog.NewInformation(cons.Add, cons.AddMsg, mw).Show()
+				// Refresh item list after add
+				if sEntity.Selected == cons.BucketEntity {
+					bindAllBuckets()
+				} else {
+					bindAllKeys(selBucket)
+				}
+
+				kw.Close()
+			}
+		}
+
+		kw.SetContent(f)
+		kw.Show()
+	}
+}
+
+// deleteBucketHandler handles the delete of a bucket
+func deleteBucketHandler(item string) {
+	f, _ := filename.Get()
+	if f == "" {
+		dialog.NewInformation(cons.BucketDelete, cons.ErrNoDb, mw).Show()
+	} else if item == "" {
+		dialog.NewInformation(cons.BucketDelete, cons.ErrNoBucket, mw).Show()
+	} else {
+		dialog.NewConfirm(cons.BucketDelete, fmt.Sprintf("Delete %v?", item), func(b bool) {
+			var err error
+			if b {
+				err = deleteBucket(item)
+
+				// Delete bucket error handling
+				if err != nil {
+					errorHandler(err)
+				} else {
+					bindAllBuckets()
+					dialog.NewInformation(cons.BucketDelete, cons.DeleteMsg, mw).Show()
+				}
+			}
+		}, mw).Show()
+	}
+}
+
+// deleteKeyHandler handles the delete of a key
+func deleteKeyHandler(item string) {
+	f, _ := filename.Get()
+	if f == "" {
+		dialog.NewInformation(cons.KeyDelete, cons.ErrNoDb, mw).Show()
+	} else if item == "" {
+		dialog.NewInformation(cons.KeyDelete, cons.ErrNoKey, mw).Show()
+	} else {
+		dialog.NewConfirm(cons.KeyDelete, fmt.Sprintf("Delete %v?", item), func(b bool) {
+			var err error
+			if b {
+				err = deleteKey(selBucket, item)
+
+				// Delete key error handling
+				if err != nil {
+					errorHandler(err)
+				} else {
+					bindAllKeys(selBucket)
+					dialog.NewInformation(cons.KeyDelete, cons.DeleteMsg, mw).Show()
+				}
+			}
+		}, mw).Show()
+	}
+}
+
+// editBucketHandler open a new window for editing bucket name
+func editBucketHandler() {
+	f, _ := filename.Get()
+	if f == "" {
+		dialog.NewInformation(cons.BucketEdit, cons.ErrNoDb, mw).Show()
+	} else if selBucket == "" {
+		dialog.NewInformation(cons.BucketEdit, cons.ErrNoBucket, mw).Show()
+	} else {
+		bw := subWindow(selBucket)
+		lBucket := widget.NewLabel(selBucket)
+		eBucket := widget.NewEntry()
+		eBucket.SetPlaceHolder("Enter a new bucket name")
+
+		f := widget.NewForm(
+			widget.NewFormItem("Name", lBucket),
+			widget.NewFormItem("New Name", eBucket),
+		)
+		f.SubmitText = "Save"
+		f.OnCancel = func() {
+			bw.Close()
+		}
+		f.OnSubmit = func() {
+			err := updateBucket(selBucket, eBucket.Text)
+			if err != nil {
+				errorHandler(err)
+			} else {
+				bindAllBuckets()
+				dialog.NewInformation(cons.BucketEdit, cons.BucketEditMsg, mw).Show()
+				bw.Close()
+			}
+		}
+
+		bw.SetContent(f)
+		bw.Show()
+	}
+}
+
+// editKeyHandler open a new window and display key value
+func editKeyHandler() {
+	f, _ := filename.Get()
+	if f == "" {
+		dialog.NewInformation(cons.KeyEdit, cons.ErrNoDb, mw).Show()
+	} else if selKey == "" {
+		dialog.NewInformation(cons.KeyEdit, cons.ErrNoKey, mw).Show()
+	} else {
+		// Define textarea widget
+		textArea := widget.NewMultiLineEntry()
+		textArea.Wrapping = fyne.TextWrapWord
+		textArea.SetMinRowsVisible(20)
+
+		// Get key value and set to text area
+		v, err := db.GetKey(selBucket, selKey)
 		if err != nil {
 			errorHandler(err)
 		}
-	}, mw).Show()
+		textArea.SetText(string(v))
+
+		kw := subWindow(selKey)
+		f := widget.NewForm(widget.NewFormItem("Value", textArea))
+		f.SubmitText = "Save"
+		f.OnCancel = func() {
+			kw.Close()
+		}
+		f.OnSubmit = func() {
+			err := updateKey(selBucket, selKey, textArea.Text)
+			if err != nil {
+				errorHandler(err)
+			} else {
+				dialog.NewInformation(cons.KeyEdit, cons.KeyEditMsg, mw).Show()
+				kw.Close()
+			}
+		}
+
+		kw.SetContent(f)
+		kw.Show()
+	}
+}
+
+// keyHandler retrieve key and set to global variable
+func keyHandler(id widget.ListItemID) {
+	v, _ := keys.GetValue(id)
+	selKey = string(v)
+}
+
+// bucketHandler opens bolt database bucket
+func bucketHandler(id widget.ListItemID) {
+	// Get selected bucket
+	v, err := buckets.GetValue(id)
+	if err != nil {
+		errorHandler(err)
+	}
+	bindAllKeys(v)
+
+	// Clear key item list selected value
+	selKey = ""
+	keyItemList.UnselectAll()
+}
+
+// openDbHandler opens a new bolt database connection to existing/new database
+func openDbHandler() {
+	d := dialog.NewFileOpen(func(uc fyne.URIReadCloser, callbackErr error) {
+		if callbackErr != nil {
+			errorHandler(callbackErr)
+			return
+		}
+
+		// Proceed to create/open if a file is selected
+		if uc != nil {
+			f := uc.URI().Path()
+
+			var err error
+			db, err = core.New(f)
+			if err != nil {
+				errorHandler(err)
+			}
+
+			// Bind filename string
+			filename.Set(uc.URI().Name())
+			bindAllBuckets()
+		}
+	}, mw)
+
+	curDir, err := os.Getwd()
+	if err != nil {
+		errorHandler(err)
+	}
+
+	// Current app directory
+	fileUri := storage.NewFileURI(curDir)
+	fileUriLister, err := storage.ListerForURI(fileUri)
+	if err != nil {
+		errorHandler(err)
+	}
+
+	// Init a .db file type for URI
+	fileExt := storage.NewExtensionFileFilter([]string{".db"})
+
+	d.SetLocation(fileUriLister)
+	d.SetFilter(fileExt)
+	d.Resize(fyne.NewSize(760, 540))
+	d.Show()
 }
 
 // aboutHandler open a new small window showing information about the app
@@ -58,4 +348,12 @@ func aboutHandler() {
 
 	aw.SetContent(container.NewCenter(aboutCard))
 	aw.Show()
+}
+
+// errorHandler handle error and show it to the user
+func errorHandler(err error) {
+	ew := dialog.NewError(err, mw)
+	ew.Resize(fyne.NewSize(200, 140))
+
+	ew.Show()
 }
