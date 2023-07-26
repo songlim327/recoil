@@ -1,0 +1,6 @@
+[Details]
+  Icon = "./resources/images/logo512.png"
+  Name = "Recoil"
+  ID = "com.songlim.recoil"
+  Version = "1.0.0"
+  Build = 1
