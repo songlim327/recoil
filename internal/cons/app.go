@@ -2,7 +2,7 @@ package cons
 
 const (
 	AppName = "Recoil"
-	AppDesc = "A bolt db viewer written in Fyne"
+	AppDesc = "A simple boltdb viewer"
 	Author  = "songlim327@gmail.com"
 	Year    = "2023"
 )
