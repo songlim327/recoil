@@ -26,4 +26,4 @@
 - Delete key in a bucket
 
 # 🌟 Releases
-For Windows, you can download a release [here]().
+For Windows, you can download a release [here](https://github.com/songlim327/recoil/releases).
