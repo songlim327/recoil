@@ -26,4 +26,4 @@
 - Delete key in a bucket
 
 # 🌟 Releases
-For windows or Linux, you can download a release [here]().
+For Windows, you can download a release [here]().
