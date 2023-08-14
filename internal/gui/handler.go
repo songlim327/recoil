@@ -7,6 +7,7 @@ import (
 	"recoil/internal/cons"
 	"recoil/internal/core"
 	"recoil/resources/images"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -23,6 +24,46 @@ func githubHandler() {
 	err := browser.OpenURL("https://github.com/songlim327/recoil")
 	if err != nil {
 		errorHandler(err, mw)
+	}
+}
+
+// searchKeyHandler search through keys
+func searchKeyHandler(query string) {
+	var searchResult []string
+	if selBucket != "" {
+		ks, err := db.IterateKey(selBucket)
+		if err != nil {
+			errorHandler(err, mw)
+		}
+
+		for _, k := range ks {
+			if strings.Contains(string(k), query) {
+				searchResult = append(searchResult, string(k))
+			}
+		}
+
+		keys.Set(searchResult)
+	}
+}
+
+// searchBucketHandler search through buckets
+func searchBucketHandler(query string) {
+	var searchResult []string
+
+	f, _ := filename.Get()
+	if f != "" {
+		bs, err := db.IterateBucket()
+		if err != nil {
+			errorHandler(err, mw)
+		}
+
+		for _, b := range bs {
+			if strings.Contains(string(b), query) {
+				searchResult = append(searchResult, string(b))
+			}
+		}
+
+		buckets.Set(searchResult)
 	}
 }
 

@@ -11,17 +11,25 @@ import (
 )
 
 // keyBox renders the key list container
-func keyBox() *container.Scroll {
+func keyBox() *fyne.Container {
 	keyItemList = itemList(keys, images.Key)
 	keyItemList.OnSelected = keyHandler
-	return container.NewVScroll(keyItemList)
+	eKey := widget.NewEntry()
+	eKey.PlaceHolder = "Search for keys..."
+	eKey.OnChanged = searchKeyHandler
+
+	return container.NewBorder(eKey, nil, nil, nil, container.NewVScroll(keyItemList))
 }
 
 // bucBox renders the bucket list container
-func bucBox() *container.Scroll {
+func bucBox() *fyne.Container {
 	bucketItemList := itemList(buckets, images.Bucket)
 	bucketItemList.OnSelected = bucketHandler
-	return container.NewVScroll(bucketItemList)
+	eBucket := widget.NewEntry()
+	eBucket.PlaceHolder = "Search for buckets..."
+	eBucket.OnChanged = searchBucketHandler
+
+	return container.NewBorder(eBucket, nil, nil, nil, container.NewVScroll(bucketItemList))
 }
 
 // opsBox renders the operation container
