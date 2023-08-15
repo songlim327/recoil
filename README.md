@@ -11,7 +11,7 @@
 
 [go-badge]: https://img.shields.io/badge/Golang-1.20-blue
 [fyne-badge]: https://img.shields.io/badge/Fyne-2.3.5-azure
-[version-badge]: https://img.shields.io/badge/release-1.0.0-powderblue
+[version-badge]: https://img.shields.io/badge/release-1.0.1-powderblue
 
 </div>
 

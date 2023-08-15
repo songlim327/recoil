@@ -2,5 +2,5 @@
   Icon = "./resources/images/logo512.png"
   Name = "Recoil"
   ID = "com.songlim.recoil"
-  Version = "1.0.0"
+  Version = "1.0.1"
   Build = 1
