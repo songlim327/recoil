@@ -24,6 +24,7 @@
 - Add new keys to a bucket
 - Edit key value
 - Delete key in a bucket
+- Search through buckets/keys in a database
 
 # 🌟 Releases
 For Windows, you can download a release [here](https://github.com/songlim327/recoil/releases).
