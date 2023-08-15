@@ -60,7 +60,6 @@ func bindAllBuckets() error {
 	buckets.Set(bytesArrToStringArr(bs))
 
 	// Clear key item list value
-	selKey = ""
 	keys.Set([]string{})
 	return nil
 }
@@ -76,7 +75,6 @@ func bindAllKeys(bucket string) error {
 	keys.Set(bytesArrToStringArr(ks))
 
 	// clear selected key value
-	selKey = ""
 	keyItemList.UnselectAll()
 	return nil
 }

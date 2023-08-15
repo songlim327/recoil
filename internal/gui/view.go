@@ -12,8 +12,7 @@ import (
 
 // keyBox renders the key list container
 func keyBox() *fyne.Container {
-	keyItemList = itemList(keys, images.Key)
-	keyItemList.OnSelected = keyHandler
+	keyItemList = itemList(keys, images.Key, cons.KeyEntity)
 	eKey := widget.NewEntry()
 	eKey.PlaceHolder = "Search for keys..."
 	eKey.OnChanged = searchKeyHandler
@@ -23,7 +22,7 @@ func keyBox() *fyne.Container {
 
 // bucBox renders the bucket list container
 func bucBox() *fyne.Container {
-	bucketItemList := itemList(buckets, images.Bucket)
+	bucketItemList := itemList(buckets, images.Bucket, cons.BucketEntity)
 	bucketItemList.OnSelected = bucketHandler
 	eBucket := widget.NewEntry()
 	eBucket.PlaceHolder = "Search for buckets..."
@@ -54,8 +53,6 @@ func opsBoxTopView() []fyne.CanvasObject {
 			openDbHandler()
 		}),
 		opsButton(cons.Add, images.Add, func() { addHandler() }),
-		opsButton(cons.BucketEdit, images.Edit, func() { editBucketHandler() }),
-		opsButton(cons.KeyEdit, images.Edit, func() { editKeyHandler() }),
 		opsButton(cons.BucketDelete, images.Delete, func() { deleteBucketHandler(selBucket) }),
 		opsButton(cons.KeyDelete, images.Delete, func() { deleteKeyHandler(selKey) }),
 	}

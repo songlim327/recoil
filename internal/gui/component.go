@@ -2,12 +2,14 @@ package gui
 
 import (
 	"image/color"
+	"recoil/internal/cons"
 	"recoil/resources/images"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -22,15 +24,27 @@ func subWindow(title string) fyne.Window {
 }
 
 // itemList returns a generic list widget
-func itemList(data binding.DataList, icon *fyne.StaticResource) *widget.List {
+func itemList(data binding.DataList, icon *fyne.StaticResource, entity string) *widget.List {
 	return widget.NewListWithData(data,
 		// Create item
 		func() fyne.CanvasObject {
-			return container.NewHBox(widget.NewIcon(icon), widget.NewLabel(""))
+			return container.NewHBox(widget.NewIcon(icon), widget.NewLabel(""), layout.NewSpacer(), container.NewGridWithColumns(1, widget.NewButtonWithIcon("", images.Edit, func() {})))
 		},
 		// Update item
 		func(di binding.DataItem, item fyne.CanvasObject) {
 			item.(*fyne.Container).Objects[1].(*widget.Label).Bind(di.(binding.String))
+			v, _ := di.(binding.String).Get()
+
+			// edit button
+			editBtn := item.(*fyne.Container).Objects[3].(*fyne.Container).Objects[0].(*widget.Button)
+
+			editBtn.OnTapped = func() {
+				if entity == cons.BucketEntity {
+					editBucketHandler(v)
+				} else {
+					editKeyHandler(v)
+				}
+			}
 		})
 }
 

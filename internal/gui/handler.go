@@ -234,15 +234,13 @@ func deleteKeyHandler(item string) {
 }
 
 // editBucketHandler open a new window for editing bucket name
-func editBucketHandler() {
+func editBucketHandler(b string) {
 	f, _ := filename.Get()
 	if f == "" {
 		dialog.NewInformation(cons.BucketEdit, cons.ErrNoDb, mw).Show()
-	} else if selBucket == "" {
-		dialog.NewInformation(cons.BucketEdit, cons.ErrNoBucket, mw).Show()
 	} else {
-		bw := subWindow(selBucket)
-		lBucket := widget.NewLabel(selBucket)
+		bw := subWindow(b)
+		lBucket := widget.NewLabel(b)
 		eBucket := widget.NewEntry()
 		eBucket.SetPlaceHolder("Enter a new bucket name")
 		eBucket.Validator = func(text string) error {
@@ -266,7 +264,7 @@ func editBucketHandler() {
 				errorHandler(err, bw)
 			}
 
-			err = updateBucket(selBucket, eBucket.Text)
+			err = updateBucket(b, eBucket.Text)
 			if err != nil {
 				errorHandler(err, bw)
 			} else {
@@ -285,12 +283,10 @@ func editBucketHandler() {
 }
 
 // editKeyHandler open a new window and display key value
-func editKeyHandler() {
+func editKeyHandler(k string) {
 	f, _ := filename.Get()
 	if f == "" {
 		dialog.NewInformation(cons.KeyEdit, cons.ErrNoDb, mw).Show()
-	} else if selKey == "" {
-		dialog.NewInformation(cons.KeyEdit, cons.ErrNoKey, mw).Show()
 	} else {
 		// Define textarea widget
 		textArea := widget.NewMultiLineEntry()
@@ -298,20 +294,20 @@ func editKeyHandler() {
 		textArea.SetMinRowsVisible(20)
 
 		// Get key value and set to text area
-		v, err := db.GetKey(selBucket, selKey)
+		v, err := db.GetKey(selBucket, k)
 		if err != nil {
 			errorHandler(err, mw)
 		}
 		textArea.SetText(string(v))
 
-		kw := subWindow(selKey)
+		kw := subWindow(k)
 		f := widget.NewForm(widget.NewFormItem("Value", textArea))
 		f.SubmitText = "Save"
 		f.OnCancel = func() {
 			kw.Close()
 		}
 		f.OnSubmit = func() {
-			err := updateKey(selBucket, selKey, textArea.Text)
+			err := updateKey(selBucket, k, textArea.Text)
 			if err != nil {
 				errorHandler(err, kw)
 			} else {
@@ -323,12 +319,6 @@ func editKeyHandler() {
 		kw.SetContent(f)
 		kw.Show()
 	}
-}
-
-// keyHandler retrieve key and set to global variable
-func keyHandler(id widget.ListItemID) {
-	v, _ := keys.GetValue(id)
-	selKey = string(v)
 }
 
 // bucketHandler opens bolt database bucket
@@ -345,7 +335,6 @@ func bucketHandler(id widget.ListItemID) {
 	}
 
 	// Clear key item list selected value
-	selKey = ""
 	keyItemList.UnselectAll()
 }
 
