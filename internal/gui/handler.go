@@ -182,8 +182,6 @@ func deleteBucketHandler(item string) {
 	f, _ := filename.Get()
 	if f == "" {
 		dialog.NewInformation(cons.BucketDelete, cons.ErrNoDb, mw).Show()
-	} else if item == "" {
-		dialog.NewInformation(cons.BucketDelete, cons.ErrNoBucket, mw).Show()
 	} else {
 		dialog.NewConfirm(cons.BucketDelete, fmt.Sprintf("Delete %v?", item), func(b bool) {
 			var err error
@@ -210,8 +208,6 @@ func deleteKeyHandler(item string) {
 	f, _ := filename.Get()
 	if f == "" {
 		dialog.NewInformation(cons.KeyDelete, cons.ErrNoDb, mw).Show()
-	} else if item == "" {
-		dialog.NewInformation(cons.KeyDelete, cons.ErrNoKey, mw).Show()
 	} else {
 		dialog.NewConfirm(cons.KeyDelete, fmt.Sprintf("Delete %v?", item), func(b bool) {
 			var err error

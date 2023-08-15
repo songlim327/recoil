@@ -14,7 +14,6 @@ var (
 	mw             fyne.Window
 	db             *core.Database
 	selBucket      string
-	selKey         string
 	filename       binding.String
 	buckets        binding.StringList
 	keys           binding.StringList

@@ -28,7 +28,13 @@ func itemList(data binding.DataList, icon *fyne.StaticResource, entity string) *
 	return widget.NewListWithData(data,
 		// Create item
 		func() fyne.CanvasObject {
-			return container.NewHBox(widget.NewIcon(icon), widget.NewLabel(""), layout.NewSpacer(), container.NewGridWithColumns(1, widget.NewButtonWithIcon("", images.Edit, func() {})))
+			return container.NewHBox(
+				widget.NewIcon(icon),
+				widget.NewLabel(""),
+				layout.NewSpacer(),
+				container.NewGridWithColumns(2,
+					widget.NewButtonWithIcon("", images.Edit, func() {}),
+					widget.NewButtonWithIcon("", images.Delete, func() {})))
 		},
 		// Update item
 		func(di binding.DataItem, item fyne.CanvasObject) {
@@ -37,12 +43,21 @@ func itemList(data binding.DataList, icon *fyne.StaticResource, entity string) *
 
 			// edit button
 			editBtn := item.(*fyne.Container).Objects[3].(*fyne.Container).Objects[0].(*widget.Button)
-
 			editBtn.OnTapped = func() {
 				if entity == cons.BucketEntity {
 					editBucketHandler(v)
 				} else {
 					editKeyHandler(v)
+				}
+			}
+
+			// delete button
+			deleteBtn := item.(*fyne.Container).Objects[3].(*fyne.Container).Objects[1].(*widget.Button)
+			deleteBtn.OnTapped = func() {
+				if entity == cons.BucketEntity {
+					deleteBucketHandler(v)
+				} else {
+					deleteKeyHandler(v)
 				}
 			}
 		})

@@ -53,8 +53,6 @@ func opsBoxTopView() []fyne.CanvasObject {
 			openDbHandler()
 		}),
 		opsButton(cons.Add, images.Add, func() { addHandler() }),
-		opsButton(cons.BucketDelete, images.Delete, func() { deleteBucketHandler(selBucket) }),
-		opsButton(cons.KeyDelete, images.Delete, func() { deleteKeyHandler(selKey) }),
 	}
 }
 
