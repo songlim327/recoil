@@ -10,13 +10,14 @@ import (
 
 // Global variables for ui state
 var (
-	a           fyne.App
-	mw          fyne.Window
-	db          *core.Database
-	selBucket   string
-	selKey      string
-	filename    binding.String
-	buckets     binding.StringList
-	keys        binding.StringList
-	keyItemList *widget.List
+	a              fyne.App
+	mw             fyne.Window
+	db             *core.Database
+	selBucket      string
+	selKey         string
+	filename       binding.String
+	buckets        binding.StringList
+	keys           binding.StringList
+	keyItemList    *widget.List
+	bucketItemList *widget.List
 )

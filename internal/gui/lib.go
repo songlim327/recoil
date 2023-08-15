@@ -61,6 +61,9 @@ func bindAllBuckets() error {
 
 	// Clear key item list value
 	keys.Set([]string{})
+
+	// Unselect bucket
+	bucketItemList.UnselectAll()
 	return nil
 }
 

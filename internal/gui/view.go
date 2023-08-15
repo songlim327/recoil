@@ -22,7 +22,7 @@ func keyBox() *fyne.Container {
 
 // bucBox renders the bucket list container
 func bucBox() *fyne.Container {
-	bucketItemList := itemList(buckets, images.Bucket, cons.BucketEntity)
+	bucketItemList = itemList(buckets, images.Bucket, cons.BucketEntity)
 	bucketItemList.OnSelected = bucketHandler
 	eBucket := widget.NewEntry()
 	eBucket.PlaceHolder = "Search for buckets..."
