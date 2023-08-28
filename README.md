@@ -28,3 +28,5 @@
 
 # 🌟 Releases
 For Windows, you can download a release [here](https://github.com/songlim327/recoil/releases).
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://buymeacoffee.com/songlim)
